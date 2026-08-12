@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>✨ 我的电脑 · 工具箱</title>
+    <style>
+        * {
+            margin: 0; padding: 0; box-sizing: border-box; user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            overflow: hidden; height: 100vh; width: 100vw;
+            background: #0b0e1a; color: #fff; touch-action: none;
+        }
+        #desktop {
+            position: relative; width: 100vw; height: 100vh;
+            background: radial-gradient(ellipse at 30% 40%, #1a1f3a, #0b0e1a 70%);
+            overflow: hidden; touch-action: none;
+        }
+        .star {
+            position: absolute; border-radius: 50%; background: #fff;
+            animation: twinkle var(--dur) ease-in-out infinite alternate;
+        }
+        @keyframes twinkle {
+            0% { opacity: 0.15; transform: scale(0.7); }
+            100% { opacity: 1; transform: scale(1.3); }
+        }
+        .desktop-icon {
+            position: absolute; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; cursor: pointer; transition: transform 0.2s, background 0.2s;
+            touch-action: manipulation; padding: 16px 12px 12px; border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.04);
+            width: 130px; height: 130px;
+        }
+        .desktop-icon:hover { background: rgba(255, 255, 255, 0.08); transform: scale(1.04); }
+        .desktop-icon:active { transform: scale(0.94); }
+        .desktop-icon .big-icon {
+            font-size: 72px; line-height: 1; filter: drop-shadow(0 8px 24px rgba(0,0,0,0.6));
+            margin-bottom: 8px;
+        }
+        .desktop-icon .big-label {
+            font-size: 18px; font-weight: 500; text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+            letter-spacing: 0.5px; background: rgba(0,0,0,0.30); padding: 2px 16px;
+            border-radius: 40px; backdrop-filter: blur(4px);
+        }
+        #myComputerDesktop { left: 36px; top: 36px; }
+        #toolboxDesktop { left: 180px; top: 36px; }
+        @media (max-width: 768px) {
+            .desktop-icon { width: 100px; height: 100px; padding: 12px 10px 10px; }
+            .desktop-icon .big-icon { font-size: 52px; }
+            .desktop-icon .big-label { font-size: 15px; padding: 2px 12px; }
+            #myComputerDesktop { left: 20px; top: 20px; }
+            #toolboxDesktop { left: 130px; top: 20px; }
+        }
+        @media (max-width: 480px) {
+            .desktop-icon { width: 80px; height: 80px; padding: 8px 6px 6px; border-radius: 12px; }
+            .desktop-icon .big-icon { font-size: 40px; }
+            .desktop-icon .big-label { font-size: 12px; padding: 1px 10px; }
+            #myComputerDesktop { left: 14px; top: 14px; }
+            #toolboxDesktop { left: 100px; top: 14px; }
+        }
+        #windows {
+            position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 52px);
+            pointer-events: none; z-index: 100;
+        }
+        #windows>* { pointer-events: auto; }
+        .window {
+            position: absolute; min-width: 300px; min-height: 200px;
+            max-width: 92vw; max-height: 85vh;
+            background: rgba(22, 28, 50, 0.82); backdrop-filter: blur(24px) saturate(1.2);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 16px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) inset;
+            display: flex; flex-direction: column; overflow: hidden;
+            animation: windowIn 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+            touch-action: none;
+        }
+        .window.active {
+            box-shadow: 0 28px 96px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.10) inset;
+        }
+        .window.maximized {
+            width: 100% !important; height: calc(100% - 52px) !important;
+            max-width: 100% !important; max-height: calc(100% - 52px) !important;
+            top: 0 !important; left: 0 !important; border-radius: 0;
+        }
+        @keyframes windowIn {
+            0% { opacity: 0; transform: scale(0.92) translateY(18px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .win-titlebar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px 8px 18px; background: rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(255,255,255,0.06); cursor: grab;
+            min-height: 44px; touch-action: none;
+        }
+        .win-titlebar:active { cursor: grabbing; }
+        .win-title {
+            display: flex; align-items: center; gap: 10px; font-size: 14px;
+            font-weight: 600; color: rgba(255,255,255,0.88); flex: 1; min-width: 0;
+        }
+        .win-title .win-icon { font-size: 18px; opacity: 0.8; }
+        .win-title .win-title-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .win-controls { display: flex; gap: 6px; flex-shrink: 0; }
+        .win-controls button {
+            width: 30px; height: 30px; border: none; border-radius: 50%;
+            background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7);
+            font-size: 14px; cursor: pointer; transition: background 0.2s, transform 0.15s;
+            display: flex; align-items: center; justify-content: center; line-height: 1;
+            touch-action: manipulation;
+        }
+        .win-controls button:hover { background: rgba(255,255,255,0.14); color: #fff; }
+        .win-controls .btn-maximize:hover { background: rgba(76, 201, 240, 0.3); color: #4cc9f0; }
+        .win-controls .btn-close:hover { background: #e74c3c; color: #fff; transform: scale(1.08); }
+        .win-body {
+            flex: 1; padding: 16px 20px 20px; overflow-y: auto;
+            color: rgba(255,255,255,0.92); font-size: 14px; line-height: 1.6;
+            -webkit-overflow-scrolling: touch;
+        }
+        .win-body::-webkit-scrollbar { width: 4px; }
+        .win-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.20); border-radius: 8px; }
+        .win-body.iframe-body { padding: 0; overflow: hidden; position: relative; }
+        .win-body.iframe-body iframe { width: 100%; height: 100%; border: none; display: block; }
+        .win-body .iframe-error {
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 100%; color: rgba(255,255,255,0.6); gap: 12px; padding: 20px;
+            text-align: center; animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .win-body .iframe-error .error-icon { font-size: 48px; }
+        .win-body .iframe-error .error-title { font-size: 18px; font-weight: 500; color: rgba(255,255,255,0.8); }
+        .win-body .iframe-error .error-desc { font-size: 13px; color: rgba(255,255,255,0.4); max-width: 400px; }
+        .win-body .iframe-error .error-timer { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+        .win-body .iframe-error .error-btn {
+            margin-top: 8px; background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.20); border-radius: 8px;
+            padding: 10px 28px; color: #fff; font-size: 14px; cursor: pointer;
+            transition: background 0.2s, transform 0.1s; font-family: inherit;
+            touch-action: manipulation; font-weight: 500;
+        }
+        .win-body .iframe-error .error-btn:hover { background: rgba(255,255,255,0.22); }
+        .win-body .iframe-error .error-btn:active { transform: scale(0.96); }
+        .win-resize {
+            position: absolute; bottom: 4px; right: 4px; width: 18px; height: 18px;
+            cursor: nwse-resize; background: transparent; z-index: 10; touch-action: none;
+        }
+        .win-resize::after {
+            content: ""; position: absolute; bottom: 2px; right: 2px;
+            width: 12px; height: 12px; border-right: 2px solid rgba(255,255,255,0.3);
+            border-bottom: 2px solid rgba(255,255,255,0.3); border-radius: 0 0 4px 0;
+            transition: border-color 0.2s;
+        }
+        .win-resize:hover::after, .win-resize:active::after { border-color: rgba(255,255,255,0.7); }
+        .mycomputer-container { display: flex; flex-direction: column; gap: 16px; height: 100%; }
+        .toolbar { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+        .add-btn {
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px; padding: 8px 18px; color: #fff; font-size: 14px;
+            cursor: pointer; transition: background 0.2s; touch-action: manipulation;
+        }
+        .add-btn:hover { background: rgba(255,255,255,0.16); }
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+        .folder-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 16px 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06); cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, transform 0.15s; touch-action: manipulation;
+        }
+        .folder-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+        .folder-item:active { transform: scale(0.94); }
+        .folder-emoji { font-size: 42px; }
+        .folder-name { font-size: 13px; margin-top: 6px; text-align: center; color: rgba(255,255,255,0.85); }
+        .folder-count { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+        .category-view { display: none; flex-direction: column; gap: 12px; height: 100%; }
+        .category-view.active { display: flex; }
+        .back-btn {
+            background: rgba(255,255,255,0.06); border: none; color: rgba(255,255,255,0.7);
+            padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+            align-self: flex-start; touch-action: manipulation;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.12); }
+        .cat-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; }
+        .link-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px 4px 8px; border-radius: 10px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.04); cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, transform 0.15s; touch-action: manipulation;
+        }
+        .link-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.10); }
+        .link-item:active { transform: scale(0.94); }
+        .link-emoji { font-size: 28px; }
+        .link-label { font-size: 11px; margin-top: 4px; color: rgba(255,255,255,0.85); }
+        .calc-display {
+            background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px;
+            text-align: right; font-size: 24px; margin-bottom: 12px; min-height: 50px;
+            word-break: break-all;
+        }
+        .calc-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .calc-buttons button {
+            padding: 14px 0; font-size: 20px; border-radius: 8px; border: none;
+            background: rgba(255,255,255,0.08); color: #fff; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .calc-buttons button:hover { background: rgba(255,255,255,0.16); }
+        .calc-buttons button.operator { background: rgba(76, 201, 240, 0.2); color: #4cc9f0; }
+        .calc-buttons button.equals { background: #4cc9f0; color: #000; }
+        .timer-display { font-size: 48px; text-align: center; margin: 20px 0; font-weight: bold; }
+        .timer-controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .timer-controls input {
+            width: 60px; padding: 8px; background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+            color: #fff; text-align: center; font-size: 16px;
+        }
+        .timer-controls button {
+            padding: 8px 18px; border-radius: 8px; border: none;
+            background: rgba(255,255,255,0.12); color: #fff; cursor: pointer;
+            font-size: 14px; transition: background 0.2s;
+        }
+        .timer-controls button:hover { background: rgba(255,255,255,0.22); }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+        .calendar .day-header { padding: 8px 0; font-weight: bold; color: rgba(255,255,255,0.7); font-size: 12px; }
+        .calendar .day { padding: 10px 0; border-radius: 6px; background: rgba(255,255,255,0.05); font-size: 14px; }
+        .calendar .day.today { background: #4cc9f0; color: #000; font-weight: bold; }
+        .calendar .day.empty { background: transparent; }
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .calendar-nav button {
+            background: rgba(255,255,255,0.1); border: none; color: #fff;
+            padding: 6px 14px; border-radius: 6px; cursor: pointer;
+        }
+        .color-picker-container { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+        .color-preview { width: 120px; height: 120px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.3); }
+        .color-value { font-size: 18px; font-family: monospace; }
+        .random-container { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+        .random-container input {
+            width: 100px; padding: 8px; background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+            color: #fff; text-align: center; font-size: 16px;
+        }
+        .random-result { font-size: 36px; font-weight: bold; margin: 10px 0; }
+        #taskbar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 52px;
+            background: rgba(11,14,26,0.75); backdrop-filter: blur(20px) saturate(1.4);
+            border-top: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center;
+            padding: 0 12px; z-index: 999; gap: 6px; touch-action: manipulation;
+        }
+        .tb-items { display: flex; gap: 4px; flex: 1; overflow-x: auto; padding: 0 4px; -webkit-overflow-scrolling: touch; }
+        .tb-items::-webkit-scrollbar { height: 0; }
+        .tb-btn {
+            padding: 4px 14px; border: none; border-radius: 8px;
+            background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75);
+            font-size: 13px; cursor: pointer; white-space: nowrap; font-family: inherit;
+            display: flex; align-items: center; gap: 6px; transition: background 0.2s;
+        }
+        .tb-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+        .tb-btn.active { background: rgba(255,255,255,0.16); color: #fff; }
+        #taskbar .tb-time { font-size: 13px; color: rgba(255,255,255,0.65); padding: 0 6px; white-space: nowrap; }
+        @media (max-width: 480px) {
+            #taskbar { height: 44px; padding: 0 4px; }
+            #windows { height: calc(100% - 44px); }
+            .window.maximized { height: calc(100% - 44px) !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="desktop">
+        <div class="desktop-icon" id="myComputerDesktop" title="打开我的电脑">
+            <div class="big-icon">💻</div>
+            <div class="big-label">我的电脑</div>
+        </div>
+        <div class="desktop-icon" id="toolboxDesktop" title="打开工具箱">
+            <div class="big-icon">🧰</div>
+            <div class="big-label">工具箱</div>
+        </div>
+    </div>
+    <div id="windows"></div>
+    <div id="taskbar">
+        <div class="tb-items" id="tbItems"></div>
+        <div class="tb-time" id="tbTime">--:--:--</div>
+    </div>
+
+    <script>
+        // ========== 数据 ==========
+        const CATEGORIES = {
+            'AI': { emoji: '🤖', label: 'AI工具' },
+            '视频': { emoji: '🎬', label: '视频平台' },
+            '动漫': { emoji: '🎨', label: '动漫漫画' },
+            '小说': { emoji: '📖', label: '小说阅读' },
+            '社交': { emoji: '💬', label: '社交社区' },
+            '游戏': { emoji: '🎮', label: '热门游戏' },
+            '购物': { emoji: '🛒', label: '购物电商' },
+            '工具': { emoji: '🔧', label: '实用工具' },
+            '搜图': { emoji: '🔍', label: '识图搜索' },
+            '海外': { emoji: '🌍', label: '海外流媒体' },
+            '影视': { emoji: '📺', label: '影视资源' },
+            '群友': { emoji: '👥', label: '皮卡群组' },
+            '皮卡': { emoji: '⚡', label: '皮卡资源' }
+        };
+        // 需要直接跳转新标签页的分类（通常因为 X-Frame-Options 限制）
+        const NO_IFRAME_CATEGORIES = ['AI', '小说', '海外'];
+
+        const LINK_DATA = [
+            { name: "ChatGPT", emoji: "🤖", url: "https://chat.openai.com", category: "AI" },
+            { name: "Gemini", emoji: "💎", url: "https://gemini.google.com", category: "AI" },
+            { name: "DeepSeek", emoji: "🧠", url: "https://deepseek.com", category: "AI" },
+            { name: "豆包", emoji: "💬", url: "https://doubao.com", category: "AI" },
+            { name: "Claude", emoji: "☁️", url: "https://claude.ai", category: "AI" },
+            { name: "Kimi", emoji: "📄", url: "https://kimi.moonshot.cn", category: "AI" },
+            { name: "通义千问", emoji: "💡", url: "https://tongyi.aliyun.com", category: "AI" },
+            { name: "文心一言", emoji: "🪶", url: "https://yiyan.baidu.com", category: "AI" },
+            { name: "Midjourney", emoji: "🎨", url: "https://www.midjourney.com", category: "AI" },
+            { name: "可灵AI", emoji: "🎞️", url: "https://klingai.com", category: "AI" },
+            { name: "讯飞星火", emoji: "🔥", url: "https://xinghuo.xfyun.cn", category: "AI" },
+            { name: "天工AI", emoji: "⚙️", url: "https://www.tiangong.cn", category: "AI" },
+            { name: "秘塔AI", emoji: "🛡️", url: "https://www.metaso.cn", category: "AI" },
+            { name: "Runway", emoji: "🎬", url: "https://runwayml.com", category: "AI" },
+            { name: "Pika", emoji: "🎥", url: "https://pika.art", category: "AI" },
+            { name: "DALL·E 3", emoji: "🖌️", url: "https://openai.com/dall-e-3", category: "AI" },
+            { name: "Stable Diffusion", emoji: "🖼️", url: "https://stablediffusionweb.com", category: "AI" },
+            { name: "Copilot", emoji: "💻", url: "https://copilot.microsoft.com", category: "AI" },
+            { name: "Perplexity", emoji: "🔎", url: "https://www.perplexity.ai", category: "AI" },
+            { name: "Character.AI", emoji: "👤", url: "https://character.ai", category: "AI" },
+            { name: "Grammarly", emoji: "✏️", url: "https://www.grammarly.com/", category: "AI" },
+            { name: "Sudowrite", emoji: "🪶", url: "https://www.sudowrite.com/", category: "AI" },
+            { name: "Copy AI", emoji: "📋", url: "https://www.copy.ai/", category: "AI" },
+            { name: "Canva", emoji: "🖌️", url: "https://www.canva.com/", category: "AI" },
+            { name: "抖音", emoji: "🎵", url: "https://www.douyin.com/", category: "视频" },
+            { name: "哔哩哔哩", emoji: "📺", url: "https://www.bilibili.com/", category: "视频" },
+            { name: "腾讯视频", emoji: "🎬", url: "https://v.qq.com/", category: "视频" },
+            { name: "爱奇艺", emoji: "🎥", url: "https://www.iqiyi.com/", category: "视频" },
+            { name: "快手", emoji: "⚡", url: "https://kuaishou.com/", category: "视频" },
+            { name: "红果免费短剧", emoji: "🍎", url: "https://www.hongguoduanju.com/", category: "视频" },
+            { name: "优酷视频", emoji: "▶️", url: "https://www.youku.com/", category: "视频" },
+            { name: "西瓜视频", emoji: "🍉", url: "https://ixigua.com/", category: "视频" },
+            { name: "樱花动漫", emoji: "🌸", url: "https://www.yinhuadm.one/", category: "动漫" },
+            { name: "AGE动漫", emoji: "🎞️", url: "https://www.agedm.io/", category: "动漫" },
+            { name: "Anime1", emoji: "📺", url: "https://anime1.me", category: "动漫" },
+            { name: "爱奇艺动漫", emoji: "📱", url: "https://www.iqiyi.com/dongman", category: "动漫" },
+            { name: "优酷动漫", emoji: "▶️", url: "https://dongman.youku.com", category: "动漫" },
+            { name: "芒果动漫", emoji: "🥭", url: "https://www.mgtv.com/dongman", category: "动漫" },
+            { name: "动漫岛", emoji: "🏝️", url: "https://www.dmd3.com", category: "动漫" },
+            { name: "新世界动漫", emoji: "🌍", url: "https://www.xsjdm.com", category: "动漫" },
+            { name: "腾讯动漫", emoji: "📚", url: "https://ac.qq.com", category: "动漫" },
+            { name: "哔哩哔哩漫画", emoji: "📖", url: "https://manga.bilibili.com", category: "动漫" },
+            { name: "快看漫画", emoji: "❤️", url: "https://www.kuaikanmanhua.com", category: "动漫" },
+            { name: "咚漫", emoji: "🔥", url: "https://www.dongmanmanhua.com", category: "动漫" },
+            { name: "咚漫(中国)", emoji: "💬", url: "https://www.dongmanmanhua.cn", category: "动漫" },
+            { name: "叭嗒", emoji: "⭐", url: "https://www.pidou.cc", category: "动漫" },
+            { name: "漫漫漫画", emoji: "😊", url: "https://www.manmanapp.com", category: "动漫" },
+            { name: "PODO漫画", emoji: "🖊️", url: "https://www.podoapp.com", category: "动漫" },
+            { name: "知音漫客", emoji: "🪶", url: "https://www.zymk.cn", category: "动漫" },
+            { name: "飒漫画", emoji: "🎨", url: "https://www.samanhua.net", category: "动漫" },
+            { name: "动漫之家", emoji: "🏠", url: "https://www.dmzj.com", category: "动漫" },
+            { name: "看漫画", emoji: "👀", url: "https://www.kanman.com", category: "动漫" },
+            { name: "漫客栈", emoji: "☂️", url: "https://www.mankezhan.com", category: "动漫" },
+            { name: "VIZ", emoji: "🔖", url: "https://www.viz.com", category: "动漫" },
+            { name: "MangaPlus", emoji: "⚡", url: "https://mangaplus.shueisha.co.jp", category: "动漫" },
+            { name: "刺猬猫", emoji: "🐱", url: "https://www.ciweimao.com", category: "动漫" },
+            { name: "漫画人", emoji: "👤", url: "https://www.manhuaren.com", category: "动漫" },
+            { name: "源仓库", emoji: "📁", url: "https://www.yckceo.com/", category: "动漫" },
+            { name: "起点读书", emoji: "📚", url: "https://www.qidian.com/", category: "小说" },
+            { name: "微信读书", emoji: "📖", url: "https://weread.qq.com/", category: "小说" },
+            { name: "番茄小说", emoji: "🍅", url: "https://fanqienovel.com/", category: "小说" },
+            { name: "QQ阅读", emoji: "📕", url: "https://book.qq.com/", category: "小说" },
+            { name: "晋江文学城", emoji: "📝", url: "https://www.jjwxc.net/", category: "小说" },
+            { name: "书旗小说", emoji: "🔖", url: "https://www.shuqi.com/", category: "小说" },
+            { name: "纵横小说", emoji: "🪶", url: "https://www.zongheng.com/", category: "小说" },
+            { name: "飞卢小说", emoji: "✒️", url: "https://www.feilu.com/", category: "小说" },
+            { name: "七猫免费小说", emoji: "🐱", url: "https://www.qimao.com/", category: "小说" },
+            { name: "掌阅", emoji: "📗", url: "https://www.zhangyue.com/", category: "小说" },
+            { name: "17K小说网", emoji: "⌨️", url: "https://www.17k.com/", category: "小说" },
+            { name: "微信", emoji: "💬", url: "https://weixin.qq.com/", category: "社交" },
+            { name: "微博", emoji: "📱", url: "https://weibo.com/", category: "社交" },
+            { name: "小红书", emoji: "❤️", url: "https://www.xiaohongshu.com/", category: "社交" },
+            { name: "知乎", emoji: "❓", url: "https://www.zhihu.com/", category: "社交" },
+            { name: "豆瓣", emoji: "🌿", url: "https://www.douban.com/", category: "社交" },
+            { name: "QQ官网", emoji: "💬", url: "https://im.qq.com/", category: "社交" },
+            { name: "网易LOFTER", emoji: "❤️", url: "https://www.lofter.com/", category: "社交" },
+            { name: "虎扑", emoji: "🏀", url: "https://www.hupu.com/", category: "社交" },
+            { name: "汽车之家", emoji: "🚗", url: "https://club.autohome.com.cn/", category: "社交" },
+            { name: "王者荣耀", emoji: "👑", url: "https://pvp.qq.com/", category: "游戏" },
+            { name: "和平精英", emoji: "🎯", url: "https://gp.qq.com/", category: "游戏" },
+            { name: "原神", emoji: "⭐", url: "https://ys.mihoyo.com/", category: "游戏" },
+            { name: "崩坏：星穹铁道", emoji: "🚂", url: "https://sr.mihoyo.com/", category: "游戏" },
+            { name: "英雄联盟手游", emoji: "🏆", url: "https://lolm.qq.com/", category: "游戏" },
+            { name: "金铲铲之战", emoji: "♟️", url: "https://jcc.qq.com/", category: "游戏" },
+            { name: "火影忍者", emoji: "🔥", url: "https://naruto.qq.com/", category: "游戏" },
+            { name: "崩坏3", emoji: "❤️", url: "https://bh3.mihoyo.com/", category: "游戏" },
+            { name: "绝区零", emoji: "⚡", url: "https://zzz.mihoyo.com/", category: "游戏" },
+            { name: "蛋仔派对", emoji: "🥚", url: "https://party.163.com/", category: "游戏" },
+            { name: "第五人格", emoji: "👻", url: "https://id5.163.com/", category: "游戏" },
+            { name: "明日方舟", emoji: "🛡️", url: "https://ak.hypergryph.com/", category: "游戏" },
+            { name: "逆水寒手游", emoji: "🌊", url: "https://n.163.com/", category: "游戏" },
+            { name: "永劫无间手游", emoji: "✊", url: "https://www.yjwujian.cn/", category: "游戏" },
+            { name: "鸣潮", emoji: "🌊", url: "https://mc.kurogames.com/", category: "游戏" },
+            { name: "幻塔", emoji: "🎲", url: "https://ht.wanmei.com/", category: "游戏" },
+            { name: "光遇", emoji: "🪶", url: "https://sky.thatgamecompany.com/", category: "游戏" },
+            { name: "阴阳师", emoji: "☯️", url: "https://yys.163.com/", category: "游戏" },
+            { name: "碧蓝航线", emoji: "🚢", url: "https://game.bilibili.com/blhx/", category: "游戏" },
+            { name: "暗黑破坏神：不朽", emoji: "💀", url: "https://di.blizzard.cn/", category: "游戏" },
+            { name: "三国志战略版", emoji: "♞", url: "https://sgzzlb.lingxigames.com/", category: "游戏" },
+            { name: "率土之滨", emoji: "🏴", url: "https://stzb.163.com/", category: "游戏" },
+            { name: "QQ飞车手游", emoji: "🚗", url: "https://speedm.qq.com/", category: "游戏" },
+            { name: "穿越火线手游", emoji: "💀", url: "https://cfm.qq.com/", category: "游戏" },
+            { name: "梦幻西游", emoji: "🐉", url: "https://my.163.com/", category: "游戏" },
+            { name: "大话西游", emoji: "🎭", url: "https://dhxy.163.com/", category: "游戏" },
+            { name: "我的世界", emoji: "🧊", url: "https://mc.163.com/", category: "游戏" },
+            { name: "迷你世界", emoji: "😊", url: "https://www.mini1.cn/", category: "游戏" },
+            { name: "球球大作战", emoji: "⚪", url: "https://www.battleofballs.com/", category: "游戏" },
+            { name: "无尽的拉格朗日", emoji: "🚀", url: "https://www.neteasegames.com/lglr/", category: "游戏" },
+            { name: "淘宝", emoji: "🏪", url: "https://www.taobao.com/", category: "购物" },
+            { name: "京东", emoji: "📦", url: "https://www.jd.com/", category: "购物" },
+            { name: "拼多多", emoji: "🛍️", url: "https://www.pinduoduo.com/", category: "购物" },
+            { name: "天猫", emoji: "🐱", url: "https://www.tmall.com/", category: "购物" },
+            { name: "闲鱼", emoji: "🐟", url: "https://www.goofish.com/", category: "购物" },
+            { name: "得物", emoji: "👟", url: "https://www.dewu.com/", category: "购物" },
+            { name: "转转", emoji: "🔄", url: "https://www.zhuanzhuan.com/", category: "购物" },
+            { name: "阿里巴巴1688", emoji: "🏭", url: "https://www.1688.com/", category: "购物" },
+            { name: "苏宁易购", emoji: "🛒", url: "https://www.suning.com/", category: "购物" },
+            { name: "唯品会", emoji: "🏷️", url: "https://www.vip.com/", category: "购物" },
+            { name: "蘑菇街", emoji: "👕", url: "https://www.mogujie.com/", category: "购物" },
+            { name: "什么值得买", emoji: "👍", url: "https://www.smzdm.com/", category: "购物" },
+            { name: "考拉海购", emoji: "🌏", url: "https://www.kaola.com/", category: "购物" },
+            { name: "Chrome", emoji: "🌐", url: "https://www.google.com/chrome/", category: "工具" },
+            { name: "剪映", emoji: "✂️", url: "https://www.capcut.com/", category: "工具" },
+            { name: "百度网盘", emoji: "☁️", url: "https://pan.baidu.com/", category: "工具" },
+            { name: "Gitee", emoji: "🔀", url: "https://gitee.com", category: "工具" },
+            { name: "开源中国", emoji: "🌐", url: "https://www.oschina.net", category: "工具" },
+            { name: "清华开源镜像", emoji: "💾", url: "https://mirrors.tuna.tsinghua.edu.cn", category: "工具" },
+            { name: "阿里云镜像", emoji: "☁️", url: "https://developer.aliyun.com/mirror", category: "工具" },
+            { name: "腾讯云镜像", emoji: "🖥️", url: "https://mirrors.cloud.tencent.com", category: "工具" },
+            { name: "华为开源镜像", emoji: "🔌", url: "https://mirrors.huaweicloud.com", category: "工具" },
+            { name: "网易开源镜像", emoji: "📥", url: "http://mirrors.163.com", category: "工具" },
+            { name: "中科大开源镜像", emoji: "🏛️", url: "https://mirrors.ustc.edu.cn", category: "工具" },
+            { name: "GitCode", emoji: "📝", url: "https://gitcode.com", category: "工具" },
+            { name: "Halo", emoji: "📝", url: "https://halo.run", category: "工具" },
+            { name: "禅道Zentao", emoji: "📋", url: "https://www.zentao.net", category: "工具" },
+            { name: "OpenI启智社区", emoji: "🤖", url: "https://openi.pcl.ac.cn", category: "工具" },
+            { name: "HBuilderX", emoji: "💻", url: "https://www.dcloud.io", category: "工具" },
+            { name: "Apache ShenYu", emoji: "🔀", url: "https://shenyu.apache.org", category: "工具" },
+            { name: "Zabbix中国社区", emoji: "📊", url: "https://www.zabbix.com/cn", category: "工具" },
+            { name: "Deepin社区", emoji: "🖥️", url: "https://www.deepin.org", category: "工具" },
+            { name: "OpenAnolis龙蜥", emoji: "🦎", url: "https://openanolis.cn", category: "工具" },
+            { name: "openEuler欧拉", emoji: "⚙️", url: "https://www.openeuler.org", category: "工具" },
+            { name: "OpenKylin开放麒麟", emoji: "💻", url: "https://www.openkylin.org", category: "工具" },
+            { name: "专搜3D图片", emoji: "🧊", url: "http://3d.iqdb.org/", category: "搜图" },
+            { name: "IQDB搜图", emoji: "🔍", url: "http://iqdb.org/", category: "搜图" },
+            { name: "Ascii2D", emoji: "👤", url: "https://ascii2d.net/", category: "搜图" },
+            { name: "EveryPixel", emoji: "🔎", url: "https://www.everypixel.com/", category: "搜图" },
+            { name: "Unsplash", emoji: "📷", url: "https://unsplash.com/", category: "搜图" },
+            { name: "谷歌识图镜像", emoji: "🔍", url: "https://soik.top/", category: "搜图" },
+            { name: "必应视觉搜索", emoji: "📷", url: "https://cn.bing.com/visualsearch", category: "搜图" },
+            { name: "TinEye", emoji: "👁️", url: "https://tineye.com/", category: "搜图" },
+            { name: "谷歌识图", emoji: "🔍", url: "https://www.google.com.hk/imghp", category: "搜图" },
+            { name: "Yandex", emoji: "🔎", url: "https://ya.ru/", category: "搜图" },
+            { name: "SauceNAO", emoji: "🔍", url: "https://saucenao.com/", category: "搜图" },
+            { name: "Trace.moe", emoji: "🎬", url: "https://trace.moe/", category: "搜图" },
+            { name: "PPBC植物图像库", emoji: "🌿", url: "https://ppbc.iplant.cn/", category: "搜图" },
+            { name: "百度识图", emoji: "☁️", url: "https://graph.baidu.com/pcpage/index?tpl_from=pc/", category: "搜图" },
+            { name: "360识图", emoji: "🖼️", url: "https://m.image.so.com/", category: "搜图" },
+            { name: "搜狗识图", emoji: "🖼️", url: "https://pic.sogou.com/pic/index.jsp?v=5/", category: "搜图" },
+            { name: "Netflix", emoji: "▶️", url: "https://www.netflix.com", category: "海外" },
+            { name: "Disney+", emoji: "⭐", url: "https://www.disneyplus.com", category: "海外" },
+            { name: "Amazon Prime Video", emoji: "🛒", url: "https://primevideo.com", category: "海外" },
+            { name: "Apple TV+", emoji: "🍎", url: "https://tv.apple.com", category: "海外" },
+            { name: "Max", emoji: "🔴", url: "https://www.max.com", category: "海外" },
+            { name: "Hulu", emoji: "📺", url: "https://www.hulu.com", category: "海外" },
+            { name: "Peacock", emoji: "🪶", url: "https://www.peacocktv.com", category: "海外" },
+            { name: "Pluto TV", emoji: "📺", url: "https://pluto.tv", category: "海外" },
+            { name: "Tubi", emoji: "🎬", url: "https://tubitv.com", category: "海外" },
+            { name: "BBC iPlayer", emoji: "📡", url: "https://www.bbc.co.uk/iplayer", category: "海外" },
+            { name: "Vimeo", emoji: "🎥", url: "https://vimeo.com", category: "海外" },
+            { name: "芒果TV", emoji: "🥭", url: "https://www.mgtv.com", category: "影视" },
+            { name: "1905电影网", emoji: "🎬", url: "https://www.1905.com", category: "影视" },
+            { name: "咪咕视频", emoji: "📶", url: "https://www.miguvideo.com", category: "影视" },
+            { name: "央视网", emoji: "📡", url: "https://tv.cctv.com", category: "影视" },
+            { name: "学习强国", emoji: "📖", url: "https://www.xuexi.cn", category: "影视" },
+            { name: "皮卡备用群", emoji: "💬", url: "https://qun.qq.com/universal-share/share?ac=1&authKey=Xld9l791HF7rsivEh%2FQHOCq3T%2FkUGp84QYDKZOliUcQUAlBccjL4VOJ98PRana%2F3&busi_data=eyJncm91cENvZGUiOiIxMDQ5NTUwOTI1IiwidG9rZW4iOiJvOUdkcDZ1OFRua3Z4Wmg5WVkzRjRoTURjcHR3ZldsRm85QzJRYXdxWjIrNTRUUGpvbzRyaGw2OXlCRWRXNnFRIiwidWluIjoiMTk2NjMzMDMxOSJ9&data=NlQKjt4AzXJQU8zoFaDXBWB-L-26e5lVnjpw_c0e-FGQDu1oMf4Yv0HMaXn3yVX-0w6KMFZXo_NSCsZILOMHwg&svctype=4&tempid=h5_group_info", category: "群友" },
+            { name: "皮卡翻车群", emoji: "💬", url: "https://qun.qq.com/universal-share/share?ac=1&authKey=1H7F1EMVtmdMrv1CzYxKwFEJpRQEtXWYo5NymTsfD60RgqfmcLAqYx2kJUBpVeta&busi_data=eyJncm91cENvZGUiOiI1Njg4NzE0MjYiLCJ0b2tlbiI6Im1YMjg3YnBncU9ibEx0cktmTHdMNGY5OE5nMWVjTDRsZkpMdTZwM2N5cElFdExEa3I5MUROSVZsTjJQTEl1SVkiLCJ1aW4iOiIxOTY2MzMwMzE5In0%3D&data=2kh6zsaP4Doa-Jl-KccfFc19LCpsFI1NTPlynFYqUPLj3RgonL8BEg2mEtGGU7CzqwSN6bdHq_SWD9hijXZ9dQ&svctype=4&tempid=h5_group_info", category: "群友" },
+            { name: "皮卡禁言群", emoji: "👥", url: "https://qun.qq.com/universal-share/share?ac=1&authKey=CfKOKp6Sc7CP%2BH6hZZ9PpeveC%2FNcfE7iSGwVsMSpfhCGCWOuPjeswNS7Cv5vtCGA&busi_data=eyJncm91cENvZGUiOiIxMDQxMjQ0MjI5IiwidG9rZW4iOiJYb2lqRHQrQ2Y4L2xyMEt5Z2dFNkphT3BONHhPLy92bUNJYjBLeWFNMjJ5WmNlSFU2ZFJ6YkpxLy9nSHg4b0poIiwidWluIjoiMTk2NjMzMDMxOSJ9&data=1UsMWD3H0fkwy-X2lVTwriyc_Va_4M76mJvFSw2HfpmpjSdtsGEybhi3JGw7tTopgZYXPVcyes6wiUHd1eznSw&svctype=4&tempid=h5_group_info", category: "群友" },
+            { name: "皮卡电报群", emoji: "📨", url: "https://t.me/+qiezQCcGXswzYTM1", category: "群友" },
+            { name: "无语群", emoji: "💬", url: "https://qun.qq.com/universal-share/share?ac=1&authKey=1MapCqFxxqy%2BOOXbkM6%2Fz3ZC3G%2BIe%2BOHkXURAf8Zy3yRH8MzazejEb3mGPY7C64m&busi_data=eyJncm91cENvZGUiOiI2MDQ1NzQyMzciLCJ0b2tlbiI6InFyMHVScWw3QzlCbzVNM1VHaEVyVDlQNDRiMThUVVJIcWtJalprOTh3Zjc3S015czdOYTVjK2k4WjhobG91T3AiLCJ1aW4iOiIxMDA1Mzg0NDE4In0%3D&data=mkN0qLE6LehMHkAdQSgjzbHFi20B9fGIKuy2jhRKEIOUD5XFikhrZwZ4UNK-PB-uCwiQicXzFFbTVn8tYHkCLg&svctype=4&tempid=h5_group_info", category: "群友" },
+            { name: "文件仓库", emoji: "☁️", url: "https://zzz.372164885.xyz/", category: "皮卡" },
+            { name: "IT-tools", emoji: "🔧", url: "https://sss.372164885.xyz", category: "皮卡" },
+            { name: "搜索引擎🔍", emoji: "🔎", url: "https://aaa.372164885.xyz", category: "皮卡" },
+            { name: "AI语音处理平台", emoji: "🧠", url: "https://123.372164885.xyz", category: "皮卡" },
+            { name: "免费图床(5m)", emoji: "🖼️", url: "https://svip.372164885.xyz", category: "皮卡" },
+            { name: "绘画(abcd123)", emoji: "🎨", url: "https://o.372164885.xyz", category: "皮卡" },
+            { name: "皮卡电报频道", emoji: "📨", url: "https://t.me/s/pkpk158/", category: "皮卡" },
+            { name: "在线修图", emoji: "🖌️", url: "https://huixiao666.github.io/cxc/", category: "皮卡" },
+            { name: "节点", emoji: "🔗", url: "https://pn.372164885.xyz", category: "皮卡" },
+            { name: "临时聊天", emoji: "💬", url: "https://chat123.372164885.xyz/", category: "皮卡" }
+        ];
+
+        const iconData = [
+            { id: 'computer', emoji: '💻', label: '我的电脑', type: 'app' },
+            { id: 'toolbox', emoji: '🧰', label: '工具箱', type: 'app' }
+        ];
+
+        let winZIndex = 100;
+        const openWindows = [];
+        let dragData = null, resizeData = null, currentCategory = null;
+
+        function $(sel, ctx = document) { return ctx.querySelector(sel); }
+        function $$(sel, ctx = document) { return [...ctx.querySelectorAll(sel)]; }
+        function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+        (function createStars() {
+            const desktop = document.getElementById('desktop');
+            for (let i = 0; i < 80; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2 + 0.5;
+                star.style.width = size + 'px'; star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + '%'; star.style.top = Math.random() * 100 + '%';
+                star.style.setProperty('--dur', Math.random() * 4 + 2 + 's');
+                star.style.animationDelay = Math.random() * 5 + 's';
+                star.style.opacity = Math.random() * 0.7 + 0.3;
+                desktop.appendChild(star);
+            }
+        })();
+
+        function updateClock() { document.getElementById('tbTime').textContent = new Date().toTimeString().slice(0, 8); }
+        updateClock(); setInterval(updateClock, 1000);
+
+        const windowsContainer = document.getElementById('windows');
+        const tbItems = document.getElementById('tbItems');
+
+        function openWindow(iconId) {
+            const icon = iconData.find(i => i.id === iconId);
+            if (!icon || icon.type !== 'app') return;
+            const existing = openWindows.find(w => w.id === iconId);
+            if (existing) {
+                if (existing.minimized) { existing.element.style.display = 'flex'; existing.minimized = false; updateTaskbar(); }
+                focusWindow(existing.element);
+                return;
+            }
+            const cfg = getWindowConfig(iconId);
+            if (!cfg) return;
+            const win = createWindow(iconId, cfg);
+            windowsContainer.appendChild(win);
+            openWindows.push({ id: iconId, element: win, title: cfg.title, icon: icon.emoji, minimized: false, maximized: false, prevState: null });
+            updateTaskbar(); focusWindow(win); centerWindow(win); addResizeHandle(win);
+        }
+
+        function getWindowConfig(iconId) {
+            if (iconId === 'computer') return { title: '💻 我的电脑', width: 700, height: 500, content: 'mycomputer' };
+            if (iconId === 'toolbox') return { title: '🧰 工具箱', width: 500, height: 400, content: 'toolbox' };
+            return null;
+        }
+
+        function createWindow(iconId, cfg) {
+            const win = document.createElement('div');
+            win.className = 'window';
+            win.style.width = cfg.width + 'px'; win.style.height = cfg.height + 'px';
+            win.dataset.winId = iconId;
+            const titlebar = document.createElement('div');
+            titlebar.className = 'win-titlebar';
+            const iconEmoji = cfg.title.match(/^.{1,2}/)?.[0] || '📄';
+            const titleText = cfg.title.replace(/^.{1,2}\s/, '');
+            titlebar.innerHTML = `
+                <div class="win-title"><span class="win-icon">${iconEmoji}</span><span class="win-title-text">${titleText}</span></div>
+                <div class="win-controls">
+                    <button class="btn-min" title="最小化">─</button>
+                    <button class="btn-maximize" title="最大化">□</button>
+                    <button class="btn-close" title="关闭">✕</button>
+                </div>`;
+            titlebar.querySelector('.btn-close').addEventListener('click', (e) => { e.stopPropagation(); closeWindow(iconId); });
+            titlebar.querySelector('.btn-min').addEventListener('click', (e) => { e.stopPropagation(); minimizeWindow(iconId); });
+            titlebar.querySelector('.btn-maximize').addEventListener('click', (e) => { e.stopPropagation(); toggleMaximize(win); });
+            titlebar.addEventListener('mousedown', (e) => { if (!e.target.closest('.win-controls')) startDrag(e, win); });
+            titlebar.addEventListener('touchstart', (e) => { if (!e.target.closest('.win-controls') && e.touches.length === 1) startDrag(e, win); }, { passive: false });
+            win.appendChild(titlebar);
+            const body = document.createElement('div');
+            body.className = 'win-body';
+            body.innerHTML = renderContent(cfg.content, iconId);
+            win.appendChild(body);
+            win.addEventListener('mousedown', () => focusWindow(win));
+            win.addEventListener('touchstart', () => focusWindow(win), { passive: true });
+            if (cfg.content === 'calculator') bindCalculator(body);
+            if (cfg.content === 'timer') bindTimer(body);
+            if (cfg.content === 'calendar') bindCalendar(body);
+            if (cfg.content === 'colorpicker') bindColorPicker(body);
+            if (cfg.content === 'random') bindRandom(body);
+            return win;
+        }
+
+        function renderContent(type, iconId) {
+            if (type === 'mycomputer') return renderFolderView();
+            if (type === 'toolbox') return renderToolboxView();
+            if (type === 'calculator') {
+                return `<div class="calc-display">0</div><div class="calc-buttons">
+                    <button>7</button><button>8</button><button>9</button><button class="operator">/</button>
+                    <button>4</button><button>5</button><button>6</button><button class="operator">*</button>
+                    <button>1</button><button>2</button><button>3</button><button class="operator">-</button>
+                    <button>0</button><button>.</button><button class="operator">C</button><button class="operator">+</button>
+                    <button class="equals" style="grid-column:span 4;">=</button></div>`;
+            }
+            if (type === 'notepad') return `<textarea style="width:100%;height:100%;background:rgba(0,0,0,0.2);border:none;color:#fff;padding:12px;resize:none;font-size:14px;" placeholder="在这里输入文本..."></textarea>`;
+            if (type === 'timer') {
+                return `<div class="timer-display">00:00</div>
+                    <div class="timer-controls">
+                        <input type="number" id="timerMinutes" placeholder="分" min="0" value="1"> :
+                        <input type="number" id="timerSeconds" placeholder="秒" min="0" value="0">
+                        <button id="timerStart">开始</button>
+                        <button id="timerPause">暂停</button>
+                        <button id="timerReset">重置</button>
+                    </div>`;
+            }
+            if (type === 'calendar') {
+                const now = new Date();
+                return `<div class="calendar-nav">
+                    <button class="cal-prev">◀</button>
+                    <span class="cal-month-year">${now.getFullYear()}年 ${now.getMonth()+1}月</span>
+                    <button class="cal-next">▶</button>
+                </div><div class="calendar" id="calendarGrid"></div>`;
+            }
+            if (type === 'colorpicker') {
+                return `<div class="color-picker-container">
+                    <input type="color" id="colorInput" value="#4cc9f0">
+                    <div class="color-preview" id="colorPreview" style="background:#4cc9f0;"></div>
+                    <div class="color-value" id="colorValue">#4cc9f0</div>
+                </div>`;
+            }
+            if (type === 'random') {
+                return `<div class="random-container">
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="number" id="randMin" placeholder="最小值" value="1">
+                        <span>~</span>
+                        <input type="number" id="randMax" placeholder="最大值" value="100">
+                    </div>
+                    <button id="randGenerate" style="padding:8px 24px; border-radius:8px; border:none; background:#4cc9f0; color:#000; font-size:16px; cursor:pointer;">生成</button>
+                    <div class="random-result" id="randResult">?</div>
+                </div>`;
+            }
+            return '';
+        }
+
+        function renderFolderView() {
+            let html = `<div class="mycomputer-container"><div class="toolbar"><button class="add-btn" onclick="window.addCustomLink()">➕ 添加快捷方式</button></div><div class="folder-grid">`;
+            Object.keys(CATEGORIES).forEach(key => {
+                const cat = CATEGORIES[key];
+                const count = LINK_DATA.filter(i => i.category === key).length;
+                html += `<div class="folder-item" onclick="window.openCategory('${key}')"><div class="folder-emoji">📁</div><div class="folder-name">${cat.emoji} ${cat.label}</div><div class="folder-count">${count} 个链接</div></div>`;
+            });
+            html += `<div class="folder-item" onclick="window.openCategory('all')"><div class="folder-emoji">📂</div><div class="folder-name">🌟 全部链接</div><div class="folder-count">${LINK_DATA.length} 个链接</div></div></div></div>`;
+            return html;
+        }
+
+        function renderCategoryView(categoryKey) {
+            let links = categoryKey === 'all' ? LINK_DATA : LINK_DATA.filter(i => i.category === categoryKey);
+            let title = categoryKey === 'all' ? '🌟 全部链接' : (CATEGORIES[categoryKey] ? `${CATEGORIES[categoryKey].emoji} ${CATEGORIES[categoryKey].label}` : categoryKey);
+            let html = `<div class="category-view active"><button class="back-btn" onclick="window.backToFolders()">← 返回</button><div class="cat-title">${title}</div><div class="link-grid">`;
+            if (links.length === 0) html += `<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.3);padding:40px 0;">此分类暂无链接</div>`;
+            else links.forEach(item => { const data = encodeURIComponent(JSON.stringify(item)); html += `<div class="link-item" onclick="window.openLinkData('${data}')"><div class="link-emoji">${item.emoji}</div><div class="link-label">${item.name}</div></div>`; });
+            html += `</div></div>`;
+            return html;
+        }
+
+        function renderToolboxView() {
+            return `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:16px; padding:10px;">
+                <div class="folder-item" onclick="openTool('calculator')"><div class="folder-emoji">🔢</div><div class="folder-name">计算器</div></div>
+                <div class="folder-item" onclick="openTool('notepad')"><div class="folder-emoji">📝</div><div class="folder-name">记事本</div></div>
+                <div class="folder-item" onclick="openTool('timer')"><div class="folder-emoji">⏱️</div><div class="folder-name">计时器</div></div>
+                <div class="folder-item" onclick="openTool('calendar')"><div class="folder-emoji">📅</div><div class="folder-name">日历</div></div>
+                <div class="folder-item" onclick="openTool('colorpicker')"><div class="folder-emoji">🎨</div><div class="folder-name">颜色选择器</div></div>
+                <div class="folder-item" onclick="openTool('random')"><div class="folder-emoji">🎲</div><div class="folder-name">随机数</div></div>
+            </div>`;
+        }
+
+        function openTool(toolId) {
+            const id = 'tool_' + toolId + '_' + Date.now();
+            const cfg = {
+                calculator: { title: '🔢 计算器', width: 320, height: 420, content: 'calculator' },
+                notepad: { title: '📝 记事本', width: 400, height: 350, content: 'notepad' },
+                timer: { title: '⏱️ 计时器', width: 320, height: 280, content: 'timer' },
+                calendar: { title: '📅 日历', width: 350, height: 380, content: 'calendar' },
+                colorpicker: { title: '🎨 颜色选择器', width: 300, height: 300, content: 'colorpicker' },
+                random: { title: '🎲 随机数', width: 300, height: 250, content: 'random' }
+            }[toolId];
+            if (!cfg) return;
+            const win = createWindow(id, cfg);
+            windowsContainer.appendChild(win);
+            openWindows.push({ id: id, element: win, title: cfg.title, icon: cfg.title.match(/^.{1,2}/)?.[0] || '📄', minimized: false, maximized: false, prevState: null });
+            updateTaskbar(); focusWindow(win); centerWindow(win); addResizeHandle(win);
+        }
+
+        function bindCalculator(body) {
+            const display = body.querySelector('.calc-display');
+            const buttons = body.querySelectorAll('.calc-buttons button');
+            let expression = '';
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const val = btn.textContent;
+                    if (val === 'C') { expression = ''; display.textContent = '0'; }
+                    else if (val === '=') {
+                        try { expression = eval(expression).toString(); display.textContent = expression; } catch (e) { display.textContent = '错误'; expression = ''; }
+                    } else {
+                        if (expression === '0' && val !== '.') expression = '';
+                        expression += val;
+                        display.textContent = expression;
+                    }
+                });
+            });
+        }
+
+        function bindTimer(body) {
+            const display = body.querySelector('.timer-display');
+            const minInput = body.querySelector('#timerMinutes');
+            const secInput = body.querySelector('#timerSeconds');
+            const startBtn = body.querySelector('#timerStart');
+            const pauseBtn = body.querySelector('#timerPause');
+            const resetBtn = body.querySelector('#timerReset');
+            let totalSeconds = 0, interval = null;
+            function updateDisplay() {
+                const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+                const s = (totalSeconds % 60).toString().padStart(2, '0');
+                display.textContent = m + ':' + s;
+            }
+            function resetTimer() {
+                clearInterval(interval);
+                interval = null;
+                const min = parseInt(minInput.value) || 0;
+                const sec = parseInt(secInput.value) || 0;
+                totalSeconds = min * 60 + sec;
+                updateDisplay();
+            }
+            startBtn.addEventListener('click', () => {
+                if (interval) return;
+                if (totalSeconds <= 0) resetTimer();
+                interval = setInterval(() => {
+                    if (totalSeconds <= 0) { clearInterval(interval); interval = null; return; }
+                    totalSeconds--;
+                    updateDisplay();
+                }, 1000);
+            });
+            pauseBtn.addEventListener('click', () => { clearInterval(interval); interval = null; });
+            resetBtn.addEventListener('click', resetTimer);
+            resetTimer();
+        }
+
+        function bindCalendar(body) {
+            const grid = body.querySelector('#calendarGrid');
+            const prevBtn = body.querySelector('.cal-prev');
+            const nextBtn = body.querySelector('.cal-next');
+            const monthYearSpan = body.querySelector('.cal-month-year');
+            let currentDate = new Date();
+            function render() {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                monthYearSpan.textContent = `${year}年 ${month+1}月`;
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month+1, 0).getDate();
+                let html = `<div class="day-header">日</div><div class="day-header">一</div><div class="day-header">二</div><div class="day-header">三</div><div class="day-header">四</div><div class="day-header">五</div><div class="day-header">六</div>`;
+                for (let i = 0; i < firstDay; i++) html += `<div class="day empty"></div>`;
+                const today = new Date();
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const isToday = (year === today.getFullYear() && month === today.getMonth() && d === today.getDate());
+                    html += `<div class="day${isToday ? ' today' : ''}">${d}</div>`;
+                }
+                grid.innerHTML = html;
+            }
+            prevBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth()-1); render(); });
+            nextBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth()+1); render(); });
+            render();
+        }
+
+        function bindColorPicker(body) {
+            const input = body.querySelector('#colorInput');
+            const preview = body.querySelector('#colorPreview');
+            const valueSpan = body.querySelector('#colorValue');
+            input.addEventListener('input', () => {
+                preview.style.background = input.value;
+                valueSpan.textContent = input.value;
+            });
+        }
+
+        function bindRandom(body) {
+            const minInput = body.querySelector('#randMin');
+            const maxInput = body.querySelector('#randMax');
+            const generateBtn = body.querySelector('#randGenerate');
+            const resultDiv = body.querySelector('#randResult');
+            generateBtn.addEventListener('click', () => {
+                const min = parseInt(minInput.value) || 0;
+                const max = parseInt(maxInput.value) || 100;
+                const result = Math.floor(Math.random() * (max - min + 1)) + min;
+                resultDiv.textContent = result;
+            });
+        }
+
+        window.openCategory = function(key) {
+            currentCategory = key;
+            const winData = openWindows.find(w => w.id === 'computer');
+            if (winData) { const body = winData.element.querySelector('.win-body'); if (body) body.innerHTML = renderCategoryView(key); }
+        };
+        window.backToFolders = function() {
+            currentCategory = null;
+            const winData = openWindows.find(w => w.id === 'computer');
+            if (winData) { const body = winData.element.querySelector('.win-body'); if (body) body.innerHTML = renderFolderView(); }
+        };
+
+        // 核心：根据分类决定打开方式
+        window.openLinkData = function(encodedData) {
+            let item;
+            try { item = JSON.parse(decodeURIComponent(encodedData)); } catch (e) { return; }
+            if (!item || !item.url) return;
+            if (NO_IFRAME_CATEGORIES.includes(item.category)) {
+                window.open(item.url, '_blank');
+            } else {
+                openLinkInWindow(item);
+            }
+        };
+
+        function openLinkInWindow(item) {
+            const url = item.url;
+            const winId = 'link_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+            const win = document.createElement('div');
+            win.className = 'window';
+            win.dataset.winId = winId;
+            const maxW = window.innerWidth * 0.88, maxH = window.innerHeight * 0.80;
+            const w = Math.min(800, maxW), h = Math.min(600, maxH);
+            win.style.width = w + 'px'; win.style.height = h + 'px';
+            const titlebar = document.createElement('div');
+            titlebar.className = 'win-titlebar';
+            titlebar.innerHTML = `
+                <div class="win-title"><span class="win-icon">${item.emoji || '🌐'}</span><span class="win-title-text">${item.name || '网页'}</span></div>
+                <div class="win-controls"><button class="btn-min" title="最小化">─</button><button class="btn-maximize" title="最大化">□</button><button class="btn-close" title="关闭">✕</button></div>`;
+            titlebar.querySelector('.btn-close').addEventListener('click', (e) => { e.stopPropagation(); closeWindowById(winId); });
+            titlebar.querySelector('.btn-min').addEventListener('click', (e) => { e.stopPropagation(); minimizeWindow(winId); });
+            titlebar.querySelector('.btn-maximize').addEventListener('click', (e) => { e.stopPropagation(); toggleMaximize(win); });
+            titlebar.addEventListener('mousedown', (e) => { if (!e.target.closest('.win-controls')) startDrag(e, win); });
+            titlebar.addEventListener('touchstart', (e) => { if (!e.target.closest('.win-controls') && e.touches.length === 1) startDrag(e, win); }, { passive: false });
+            win.appendChild(titlebar);
+            const body = document.createElement('div');
+            body.className = 'win-body';
+            body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,0.5);">⏳ 正在加载...</div>';
+            win.appendChild(body);
+            windowsContainer.appendChild(win);
+            const winData = { id: winId, element: win, title: item.name || '网页', icon: item.emoji || '🌐', minimized: false, maximized: false, prevState: null };
+            openWindows.push(winData);
+            updateTaskbar(); focusWindow(win); centerWindow(win); addResizeHandle(win);
+
+            // 使用 fetch 预检网络连通性，避免长时间挂起
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 3000);
+            fetch(url, { method: 'HEAD', mode: 'no-cors', signal: controller.signal })
+                .then(() => {
+                    clearTimeout(timeout);
+                    setupIframe(win, body, item, winId);
+                })
+                .catch(() => {
+                    clearTimeout(timeout);
+                    window.open(url, '_blank');
+                    closeWindowById(winId);
+                });
+        }
+
+        function setupIframe(win, body, item, winId) {
+            body.className = 'win-body iframe-body';
+            body.innerHTML = '';
+            const iframe = document.createElement('iframe');
+            iframe.src = item.url;
+            iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups';
+            iframe.style.width = '100%'; iframe.style.height = '100%'; iframe.style.border = 'none';
+            let loadFinished = false, loadFailed = false, timeoutId = null;
+
+            iframe.addEventListener('load', function() {
+                if (loadFailed || loadFinished) return;
+                clearTimeout(timeoutId);
+                loadFinished = true;
+                try {
+                    const loc = iframe.contentWindow.location.href;
+                    if (loc === 'about:blank') {
+                        showErrorAndRedirect('🚫', '无法嵌入', '该网站禁止在框架中显示，将自动在新标签页打开', item.url, win, winId, body);
+                    }
+                } catch (e) { /* 跨域加载成功 */ }
+            });
+
+            iframe.onerror = function() {
+                if (loadFailed || loadFinished) return;
+                clearTimeout(timeoutId);
+                loadFailed = true;
+                showErrorAndRedirect('⚠️', '加载失败', '网络错误，将自动在新标签页打开', item.url, win, winId, body);
+            };
+
+            timeoutId = setTimeout(() => {
+                if (loadFailed || loadFinished) return;
+                loadFailed = true;
+                showErrorAndRedirect('⏱️', '连接超时', '网站响应超时，将自动在新标签页打开', item.url, win, winId, body);
+            }, 5000);
+
+            body.appendChild(iframe);
+
+            function showErrorAndRedirect(icon, title, desc, url, winElement, winId, bodyEl) {
+                if (loadFailed && bodyEl.querySelector('.iframe-error')) return;
+                loadFailed = true;
+                bodyEl.innerHTML = `
+                    <div class="iframe-error">
+                        <div class="error-icon">${icon}</div><div class="error-title">${title}</div><div class="error-desc">${desc}</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,0.3);word-break:break-all;max-width:400px;">${url}</div>
+                        <div class="error-timer">⏳ 即将跳转...</div>
+                        <button class="error-btn" onclick="window.open('${url}','_blank'); window.closeWindowById('${winId}')">📂 立即在新标签页打开</button>
+                    </div>`;
+                bodyEl.className = 'win-body';
+                setTimeout(() => { window.open(url, '_blank'); window.closeWindowById(winId); }, 1000);
+            }
+        }
+
+        window.closeWindowById = function(winId) {
+            const idx = openWindows.findIndex(w => w.id === winId);
+            if (idx !== -1) {
+                openWindows[idx].element.remove();
+                openWindows.splice(idx, 1);
+                updateTaskbar();
+                if (openWindows.length > 0) focusWindow(openWindows[openWindows.length - 1].element);
+            }
+        };
+
+        window.addCustomLink = function() {
+            const name = prompt('请输入链接名称：', '我的网站');
+            if (!name || !name.trim()) return;
+            const url = prompt('请输入网址 (包含 http:// 或 https://)：', 'https://example.com');
+            if (!url || !url.trim()) return;
+            let finalUrl = url.trim();
+            if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) finalUrl = 'https://' + finalUrl;
+            const emoji = prompt('请输入图标表情符号（如 🌐）：', '🌐') || '🌐';
+            const category = prompt('请输入分类（AI/视频/动漫/小说/社交/游戏/购物/工具/搜图/海外/影视/群友/皮卡）：', '工具');
+            const validCategories = Object.keys(CATEGORIES);
+            const finalCategory = validCategories.includes(category) ? category : '工具';
+            LINK_DATA.push({ name: name.trim(), emoji, url: finalUrl, category: finalCategory });
+            const winData = openWindows.find(w => w.id === 'computer');
+            if (winData) { const body = winData.element.querySelector('.win-body'); if (body) body.innerHTML = currentCategory ? renderCategoryView(currentCategory) : renderFolderView(); }
+        };
+        window.openTool = openTool;
+
+        function focusWindow(win) { winZIndex++; win.style.zIndex = winZIndex; win.classList.add('active'); $$('.window').forEach(w => { if (w !== win) w.classList.remove('active'); }); }
+        function closeWindow(iconId) { const idx = openWindows.findIndex(w => w.id === iconId); if (idx === -1) return; openWindows[idx].element.remove(); openWindows.splice(idx,1); updateTaskbar(); if (openWindows.length>0) focusWindow(openWindows[openWindows.length-1].element); }
+        function minimizeWindow(iconId) { const winData = openWindows.find(w => w.id === iconId); if (!winData) return; winData.element.style.display = winData.minimized ? 'flex' : 'none'; winData.minimized = !winData.minimized; updateTaskbar(); }
+        function toggleMaximize(win) {
+            const winData = openWindows.find(w => w.element === win); if (!winData) return;
+            if (winData.maximized) {
+                win.classList.remove('maximized');
+                if (winData.prevState) { win.style.width = winData.prevState.width; win.style.height = winData.prevState.height; win.style.left = winData.prevState.left; win.style.top = winData.prevState.top; }
+                else centerWindow(win);
+                winData.maximized = false; win.querySelector('.btn-maximize').textContent = '□';
+            } else {
+                const rect = win.getBoundingClientRect();
+                winData.prevState = { width: rect.width+'px', height: rect.height+'px', left: win.style.left, top: win.style.top };
+                win.classList.add('maximized'); winData.maximized = true; win.querySelector('.btn-maximize').textContent = '❐';
+            }
+        }
+        function centerWindow(win) { const rect = win.getBoundingClientRect(); win.style.left = clamp((window.innerWidth-rect.width)/2, 8, window.innerWidth-rect.width-8)+'px'; win.style.top = clamp((window.innerHeight-rect.height)/2-20, 8, window.innerHeight-rect.height-60)+'px'; }
+        function addResizeHandle(win) { const handle = document.createElement('div'); handle.className='win-resize'; win.appendChild(handle); handle.addEventListener('mousedown', (e)=>{ e.stopPropagation(); e.preventDefault(); startResize(e,win); }); handle.addEventListener('touchstart', (e)=>{ if(e.touches.length===1){ e.stopPropagation(); e.preventDefault(); startResize(e,win); } },{passive:false}); }
+        function startResize(e,win) { if(win.classList.contains('maximized')) return; const isTouch=e.type==='touchstart'; const clientX=isTouch?e.touches[0].clientX:e.clientX; const clientY=isTouch?e.touches[0].clientY:e.clientY; const rect=win.getBoundingClientRect(); resizeData={win,startX:clientX,startY:clientY,startWidth:rect.width,startHeight:rect.height,isTouch}; if(isTouch){ document.addEventListener('touchmove',onResizeMove,{passive:false}); document.addEventListener('touchend',onResizeEnd); } else { document.addEventListener('mousemove',onResizeMove); document.addEventListener('mouseup',onResizeEnd); } }
+        function onResizeMove(e) { if(!resizeData) return; const clientX=resizeData.isTouch?e.touches[0].clientX:e.clientX; const clientY=resizeData.isTouch?e.touches[0].clientY:e.clientY; const{win,startX,startY,startWidth,startHeight}=resizeData; let w=Math.max(300,startWidth+(clientX-startX)); let h=Math.max(200,startHeight+(clientY-startY)); const rect=win.getBoundingClientRect(); w=Math.min(w,window.innerWidth-rect.left-8); h=Math.min(h,window.innerHeight-rect.top-60); win.style.width=w+'px'; win.style.height=h+'px'; if(resizeData.isTouch) e.preventDefault(); }
+        function onResizeEnd() { resizeData=null; document.removeEventListener('mousemove',onResizeMove); document.removeEventListener('mouseup',onResizeEnd); document.removeEventListener('touchmove',onResizeMove); document.removeEventListener('touchend',onResizeEnd); }
+        function startDrag(e,win) { if(win.classList.contains('maximized')||resizeData) return; const isTouch=e.type==='touchstart'; const clientX=isTouch?e.touches[0].clientX:e.clientX; const clientY=isTouch?e.touches[0].clientY:e.clientY; const rect=win.getBoundingClientRect(); dragData={win,offsetX:clientX-rect.left,offsetY:clientY-rect.top,isTouch}; if(isTouch){ document.addEventListener('touchmove',onDragMove,{passive:false}); document.addEventListener('touchend',onDragEnd); e.preventDefault(); } else { document.addEventListener('mousemove',onDragMove); document.addEventListener('mouseup',onDragEnd); e.preventDefault(); } }
+        function onDragMove(e) { if(!dragData) return; const clientX=dragData.isTouch?e.touches[0].clientX:e.clientX; const clientY=dragData.isTouch?e.touches[0].clientY:e.clientY; const{win,offsetX,offsetY}=dragData; win.style.left=clamp(clientX-offsetX,4,window.innerWidth-win.offsetWidth-4)+'px'; win.style.top=clamp(clientY-offsetY,4,window.innerHeight-win.offsetHeight-60)+'px'; if(dragData.isTouch) e.preventDefault(); }
+        function onDragEnd() { dragData=null; document.removeEventListener('mousemove',onDragMove); document.removeEventListener('mouseup',onDragEnd); document.removeEventListener('touchmove',onDragMove); document.removeEventListener('touchend',onDragEnd); }
+        function updateTaskbar() { tbItems.innerHTML=''; openWindows.forEach(wd=>{ const btn=document.createElement('button'); btn.className='tb-btn'; if(wd.minimized) btn.style.opacity='0.5'; btn.innerHTML=`<span class="tb-icon">${wd.icon||'🌐'}</span> ${wd.title}`; btn.addEventListener('click',()=>{ if(wd.minimized){ wd.element.style.display='flex'; wd.minimized=false; updateTaskbar(); } focusWindow(wd.element); }); tbItems.appendChild(btn); }); }
+
+        document.getElementById('myComputerDesktop').addEventListener('click', ()=> openWindow('computer'));
+        document.getElementById('toolboxDesktop').addEventListener('click', ()=> openWindow('toolbox'));
+        document.addEventListener('keydown', (e) => { if(e.key==='Escape'){ const active=document.querySelector('.window.active'); if(active){ const wd=openWindows.find(w=>w.element===active); if(wd&&wd.maximized) toggleMaximize(active); else closeWindow(active.dataset.winId); } } });
+        setTimeout(()=> openWindow('computer'), 200);
+    </script>
+</body>
+</html>
